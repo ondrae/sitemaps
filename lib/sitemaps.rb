@@ -16,6 +16,7 @@ require 'sitemaps/streamer'
 require 'memory_profiler'
 
 
+
 # Discover, fetch and parse XML sitemaps as defined by the `http://sitemaps.org` spec.
 module Sitemaps
 
