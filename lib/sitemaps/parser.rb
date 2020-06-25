@@ -12,7 +12,7 @@ module Sitemaps
     # @param filter_indexes [Boolean, nil] if truthy, filter is called per submap as well as entries.
     # @return [Sitemap] the sitemap parsed from the XML string. If the XML string given is invalid,
     #   a sitemap will still be returned, but the entries and sitemaps keys will be empty.
-    def self.parse(source, max_entries: nil, filter: nil, filter_indexes: nil)
+    def self.parse(source, max_entries: nil, filter: nil, filter_indexes: nil, listener: nil)
       document = REXML::Document.new(source)
       entries  = document.elements.to_a("/urlset/url").map do |root|
         loc  = parse_loc(root) || next

@@ -6,10 +6,15 @@ require 'set'
 require 'time'
 require 'rexml/document'
 require 'net/http'
+require 'saxerator'
 
 require 'sitemaps/version'
 require 'sitemaps/parser'
 require 'sitemaps/fetcher'
+require 'sitemaps/streamer'
+
+require 'memory_profiler'
+
 
 # Discover, fetch and parse XML sitemaps as defined by the `http://sitemaps.org` spec.
 module Sitemaps
@@ -30,6 +35,11 @@ module Sitemaps
   Sitemap = Struct.new(:entries, :sitemaps)
 
   @default_fetcher = ->(u) { Sitemaps::Fetcher.fetch(u) }
+
+  # Fetch, stream, and return an iterator.
+  def self.stream(source)
+    Sitemaps::Streamer.stream(source)
+  end
 
   # Parse a sitemap from an XML string. Does not fail on invalid documents, but doesn't include
   # invalid entries in the final set. As such, a non-XML file, or non-sitemap XML file will return
@@ -64,14 +74,14 @@ module Sitemaps
   #   @return [Sitemap]
   #   @yield [Entry] Filters the entry from the sitemap if the block returns falsey.
   #   @yieldreturn [Boolean] whether or not to include the entry in the sitemap.
-  def self.fetch(url, fetcher: nil, max_entries: nil, filter_indexes: nil, &block)
+  def self.fetch(url, fetcher: nil, max_entries: nil, filter_indexes: nil, listener: nil, &block)
     fetcher ||= @default_fetcher
     unless url.is_a? URI
       url = "http://#{url}" unless url =~ %r{^https?://}
       url = URI.parse(url)
     end
 
-    _instance.fetch_recursive(url, fetcher, max_entries, filter_indexes, &block)
+    _instance.fetch_recursive(url, fetcher, max_entries, filter_indexes, listener, &block)
   end
 
   # Discover, fetch and parse sitemaps from the given host.
@@ -125,7 +135,7 @@ module Sitemaps
   class Instance
     # recursively fetch sitemaps and sitemap indexes from the given urls.
     # @return [Sitemap]
-    def fetch_recursive(urls, fetcher, max_entries, filter_indexes, &block)
+    def fetch_recursive(urls, fetcher, max_entries, filter_indexes, listener, &block)
       queue = urls.is_a?(Array) ? urls : [urls]
       maps  = {}
 
@@ -139,7 +149,7 @@ module Sitemaps
 
           # fetch this item in the queue, and queue up any sub maps it found
           source  = fetcher.call(url)
-          sitemap = Sitemaps::Parser.parse(source, max_entries: max_entries, filter: block, filter_indexes: filter_indexes)
+          sitemap = Sitemaps::Parser.parse(source, max_entries: max_entries, filter: block, filter_indexes: filter_indexes, listener: listener)
 
           # save the results and queue up any submaps it found
           maps[url] = sitemap

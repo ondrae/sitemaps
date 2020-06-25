@@ -28,7 +28,10 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'byebug', '~> 8.2'
   spec.add_development_dependency 'yard', '~> 0.9.11'
   spec.add_development_dependency 'simplecov', '~> 0.16'
+  spec.add_development_dependency 'pry'
 
+  spec.add_runtime_dependency 'saxerator', '~> 0.9.9'
+  spec.add_runtime_dependency 'memory_profiler'
   spec.add_runtime_dependency 'activesupport',
     (ENV['ACTIVESUPPORT_VERSION'] || ['>= 4', '< 7'])
 end

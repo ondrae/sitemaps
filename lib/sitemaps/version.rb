@@ -1,3 +1,3 @@
 module Sitemaps
-  VERSION = "0.2.3".freeze
+  VERSION = "1".freeze
 end
